@@ -1,50 +1,52 @@
 # React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Simulador de Crédito Associativo
 
-Currently, two official plugins are available:
+## Descrição
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Este projeto é um simulador de crédito associativo. Ele permite aos usuários calcular a viabilidade de um financiamento imobiliário baseado em diversos parâmetros, incluindo valor do contrato, entrada, renda mensal e data de início da obra.
 
-## Expanding the ESLint configuration
+## Funcionalidades
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- Cálculo de parcelas durante e após o período de obra
+- Verificação de comprometimento de renda
+- Análise de viabilidade baseada em critérios pré-definidos
+- Cálculo do Valor Geral de Vendas (VGV)
+- Determinação da data e valor da última parcela
 
-- Configure the top-level `parserOptions` property like this:
+## Tecnologias Utilizadas
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+- React
+- TypeScript
+- Chakra UI
+- date-fns
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Instalação
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+1. Clone o repositório:
+   ```
+   git clone https://github.com/seu-usuario/simulador-credito-associativo.git
+   ```
+2. Navegue até o diretório do projeto:
+   ```
+   cd simulador-credito-associativo
+   ```
+3. Instale as dependências:
+   ```
+   yarn install
+   ```
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+## Como Usar
+
+1. Inicie o servidor de desenvolvimento:
+   ```
+   yarn dev
+   ```
+2. Abra o navegador e acesse `http://localhost:5173/`
+3. Preencha os campos do formulário com as informações necessárias
+4. Clique em "Calcular Simulação" para ver os resultados
+
+## Estrutura do Projeto
+
+- `src/Produtos/CreditoAssociativo/index.tsx`: Componente principal do simulador
+- `src/simluadorFunctions.ts`: Funções auxiliares para cálculos
