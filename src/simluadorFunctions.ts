@@ -1,51 +1,50 @@
 export function calcularParcelasPRICE(
-   {valorContrato, entradaInicial, numeroParcelas, taxaJurosAnual, sistemaAmortizacao}: {
+   {valorContrato, numeroParcelas, taxaJurosAnual, parcelasComJurosZero = 0}: {
     valorContrato: number;
-    entradaInicial: number;
     numeroParcelas: number;
     taxaJurosAnual: number;
-    sistemaAmortizacao: string;
+    parcelasComJurosZero?: number;
    }
   ): {
-    valorParcela: number;
+    parcelas: number[];
     totalJuros: number;
     valorTotal: number;
-    cet: number;
   } {
-    const principal = valorContrato - entradaInicial;
     const taxaJurosMensal = taxaJurosAnual / 12;
-  
-    if (sistemaAmortizacao === 'PRICE') {
-      let valorParcela: number;
-  
-      if (taxaJurosAnual === 0) {
-        // Se a taxa de juros for zero, simplesmente dividimos o principal pelo número de parcelas
-        valorParcela = principal / numeroParcelas;
-      } else {
-        // Fórmula padrão do sistema PRICE
-        valorParcela =
-          (principal * taxaJurosMensal * Math.pow(1 + taxaJurosMensal, numeroParcelas)) /
-          (Math.pow(1 + taxaJurosMensal, numeroParcelas) - 1);
-      }
-  
-      const valorTotal = valorParcela * numeroParcelas;
-      const totalJuros = valorTotal - principal;
-  
-      // Calcula CET (Custo Efetivo Total)
-      const cet = taxaJurosAnual === 0 ? 0 : (Math.pow(1 + taxaJurosMensal, 12) - 1) * 100;
-  
-      return {
-        valorParcela,
-        totalJuros,
-        valorTotal,
-        cet,
-      };
-    } else if (sistemaAmortizacao === 'SAC') {
-      // Implementação do sistema SAC, se necessário
-      // ...
+    let saldoDevedor = valorContrato;
+    const parcelas = [];
+    let totalJuros = 0;
+
+    // Parcelas com juros zero (período de obra)
+    for (let i = 0; i < parcelasComJurosZero; i++) {
+      const valorParcela = valorContrato / numeroParcelas;
+      parcelas.push(valorParcela);
+      saldoDevedor -= valorParcela;
     }
-  
-    throw new Error('Sistema de amortização inválido');
+
+    // Parcelas com juros (período pós-obra)
+    if (saldoDevedor > 0) {
+      const parcelasRestantes = numeroParcelas - parcelasComJurosZero;
+      const valorParcela = 
+        (saldoDevedor * taxaJurosMensal * Math.pow(1 + taxaJurosMensal, parcelasRestantes)) /
+        (Math.pow(1 + taxaJurosMensal, parcelasRestantes) - 1);
+
+      for (let i = 0; i < parcelasRestantes; i++) {
+        const juros = saldoDevedor * taxaJurosMensal;
+        const amortizacao = valorParcela - juros;
+        saldoDevedor -= amortizacao;
+        totalJuros += juros;
+        parcelas.push(valorParcela);
+      }
+    }
+
+    const valorTotal = parcelas.reduce((sum, parcela) => sum + parcela, 0);
+
+    return {
+      parcelas,
+      totalJuros,
+      valorTotal
+    };
   }
 
 export function calcularDiferencaMeses(dataInicio: Date, dataFim: Date): number {

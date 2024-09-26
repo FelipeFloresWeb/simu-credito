@@ -45,58 +45,41 @@ export const CreditoAssociativo = () => {
     
         const valorFinanciado = contrato - entrada;
         
-        // Cálculo para o período de obra (24 meses)
-        const parcelasObra = calcularParcelasPRICE({
+        const resultado = calcularParcelasPRICE({
             valorContrato: valorFinanciado,
-            entradaInicial: 0,
-            numeroParcelas: 24,
-            taxaJurosAnual: 0,
-            sistemaAmortizacao: 'PRICE'
+            numeroParcelas: 60,
+            taxaJurosAnual: 0.12, // 12% ao ano
+            parcelasComJurosZero: 24 // 24 meses durante a obra com juros zero
         });
-     
-        // Cálculo para o período pós-obra (36 meses)
-        const parcelasPosObra = calcularParcelasPRICE({
-            valorContrato: valorFinanciado,
-            entradaInicial: 0,
-            numeroParcelas: 36,
-            taxaJurosAnual: 0.12,
-            sistemaAmortizacao: 'PRICE'
-        });
-        
-        // Cálculo do número total de parcelas necessárias
-        const totalParcelas = Math.ceil(valorFinanciado / parcelasObra.valorParcela);
-        const parcelasDuranteObra = Math.min(totalParcelas, 24);
-        const totalParcelasPosObra = totalParcelas > 24 ? Math.min(totalParcelas - 24, 36) : 0;
-
-        // Cálculo do valor da última parcela
-        const valorUltimaParcela = valorFinanciado - (parcelasObra.valorParcela * (parcelasDuranteObra - 1) + 
-                                   parcelasPosObra.valorParcela * (totalParcelasPosObra - 1));
-
-        // Cálculo da data da última parcela
-        const dataUltimaParcela = addMonths(dataInicioObraDate, totalParcelas - 1);
+    
+        const parcelasObra = resultado.parcelas.slice(0, 24);
+        const parcelasPosObra = resultado.parcelas.slice(24);
+    
+        const valorParcelaObra = parcelasObra[0];
+        const valorParcelaPosObra = parcelasPosObra[0];
     
         // Cálculo do VGV (Valor Geral de Vendas)
-        const vgv = contrato + (parcelasPosObra.totalJuros || 0);
+        const vgv = contrato + resultado.totalJuros;
     
         // Verificação do comprometimento de renda
-        const comprometimentoObra = (parcelasObra.valorParcela / renda) * 100;
-        const comprometimentoPosObra = (parcelasPosObra.valorParcela / renda) * 100;
-        const parcelaPosObraVGV = (parcelasPosObra.valorParcela / vgv) * 100;
+        const comprometimentoObra = (valorParcelaObra / renda) * 100;
+        const comprometimentoPosObra = (valorParcelaPosObra / renda) * 100;
+        const parcelaPosObraVGV = (valorParcelaPosObra / vgv) * 100;
     
         const comprometimentoRendaObra = comprometimentoObra <= 35;
         const comprometimentoRendaPosObra = comprometimentoPosObra <= 10;
         const verificacaoVGVPosObra = parcelaPosObraVGV <= 5;
-        
+    
         const parcelaAnual = renda * 12 * 0.70;
         const parcelaSemestral = renda * 6 * 0.70;
-        
+    
         const verificacaoAnual = parcelaAnual >= valorFinanciado;
         const verificacaoSemestral = parcelaSemestral >= valorFinanciado / 2;
-        
+    
         const aprovado = comprometimentoRendaObra && comprometimentoRendaPosObra && verificacaoVGVPosObra && (verificacaoAnual || verificacaoSemestral);
-        
+    
         const motivos = []; 
-        
+    
         if (!comprometimentoRendaObra) {
             motivos.push(`Comprometimento de renda durante a obra excede 35% (atual: ${comprometimentoObra.toFixed(2)}%)`);
         }
@@ -115,8 +98,8 @@ export const CreditoAssociativo = () => {
             Valor do Contrato: R$ ${contrato.toFixed(2)}
             Valor de Entrada: R$ ${entrada.toFixed(2)}
             Valor Financiado: R$ ${valorFinanciado.toFixed(2)}
-            Parcela durante obra: R$ ${parcelasObra.valorParcela.toFixed(2)}
-            Parcela pós-obra: R$ ${parcelasPosObra.valorParcela.toFixed(2)}
+            Parcela durante obra: R$ ${valorParcelaObra.toFixed(2)}
+            Parcela pós-obra: R$ ${valorParcelaPosObra.toFixed(2)}
             Parcela anual: R$ ${parcelaAnual.toFixed(2)}
             Parcela semestral: R$ ${parcelaSemestral.toFixed(2)}
             Meses até Habite-se: ${mesesAteHabitese}
@@ -125,9 +108,9 @@ export const CreditoAssociativo = () => {
             VGV: R$ ${vgv.toFixed(2)}
             Parcela pós-obra em relação ao VGV: ${parcelaPosObraVGV.toFixed(2)}%
             Data de início da obra: ${format(dataInicioObraDate, 'dd/MM/yyyy')}
-            Número total de parcelas: ${totalParcelas}
-            Data da última parcela: ${format(dataUltimaParcela, 'dd/MM/yyyy')}
-            Valor da última parcela: R$ ${valorUltimaParcela.toFixed(2)}
+            Número total de parcelas: ${resultado.parcelas.length}
+            Data da última parcela: ${format(addMonths(dataInicioObraDate, resultado.parcelas.length - 1), 'dd/MM/yyyy')}
+            Valor da última parcela: R$ ${resultado.parcelas[resultado.parcelas.length - 1].toFixed(2)}
             ${!aprovado ? `\nMotivos da reprovação:\n${motivos.join('\n')}` : ''}
         `);
     };
