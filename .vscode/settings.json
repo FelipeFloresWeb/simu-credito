@@ -1,0 +1,11 @@
+{
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always"
+    },
+    "prettier.semi": true,
+    "prettier.singleQuote": false,
+    "prettier.tabWidth": 4,
+    "prettier.printWidth": 150
+}
