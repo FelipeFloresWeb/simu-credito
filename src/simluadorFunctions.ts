@@ -28,6 +28,14 @@ export function calcularParcelasPRICE({
     // Parcelas com juros (período pós-obra)
     if (saldoDevedor > 0) {
         const parcelasRestantes = numeroParcelas - parcelasComJurosZero;
+
+        // Cálculo da parcela fórmula:
+        // P = (PV * r * (1 + r)^n) / ((1 + r)^n - 1)
+        // Onde:
+        // P = valor da parcela
+        // PV = saldo devedor (valor presente)
+        // r = taxa de juros mensal
+        // n = número de parcelas restantes
         const valorParcela =
             (saldoDevedor * taxaJurosMensal * Math.pow(1 + taxaJurosMensal, parcelasRestantes)) /
             (Math.pow(1 + taxaJurosMensal, parcelasRestantes) - 1);

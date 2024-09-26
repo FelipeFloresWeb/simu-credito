@@ -53,6 +53,9 @@ export const CreditoAssociativo = () => {
             taxaJurosAnual: 0.12, // 12% ao ano
             parcelasComJurosZero: 24, // 24 meses durante a obra com juros zero
         });
+
+        console.log({ resultado });
+
         const parcelasObra = resultado.parcelas.slice(0, 24);
         const parcelasPosObra = resultado.parcelas.slice(24);
 
