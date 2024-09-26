@@ -1,6 +1,6 @@
 import { Box, Heading, Button, FormControl, FormLabel, Grid, Input, Text, VStack } from "@chakra-ui/react";
 import { useState } from "react";
-import { calculatePriceInstallments, calculateMonthDifference } from '../../simluadorFunctions';
+import { calcularDiferencaMeses, calcularParcelasPRICE } from '../../simluadorFunctions';
 import { format, addMonths } from 'date-fns'; 
 
 export const CreditoAssociativo = () => {
@@ -25,7 +25,7 @@ export const CreditoAssociativo = () => {
       
         const dataInicioObraDate = new Date(dataInicioObra);
         const dataHabiteseDate = new Date(dataHabitese);
-        const mesesAteHabitese = calculateMonthDifference(dataInicioObraDate, dataHabiteseDate);
+        const mesesAteHabitese = calcularDiferencaMeses(dataInicioObraDate, dataHabiteseDate);
       
         // Verifica se a entrada é maior ou igual ao valor do contrato
         if (entrada >= contrato) {
@@ -46,77 +46,77 @@ export const CreditoAssociativo = () => {
         const valorFinanciado = contrato - entrada;
         
         // Cálculo para o período de obra (24 meses)
-        const installmentsObra = calculatePriceInstallments(
-            valorFinanciado,
-            0,
-            24,
-            0, // 0% de juros durante a obra
-            'PRICE'
-        );
-      
+        const parcelasObra = calcularParcelasPRICE({
+            valorContrato: valorFinanciado,
+            entradaInicial: 0,
+            numeroParcelas: 24,
+            taxaJurosAnual: 0,
+            sistemaAmortizacao: 'PRICE'
+        });
+     
         // Cálculo para o período pós-obra (36 meses)
-        const installmentsPosObra = calculatePriceInstallments(
-            valorFinanciado,
-            0,
-            36,
-            0.12, // 12% de juros anuais
-            'PRICE'
-        );
-
+        const parcelasPosObra = calcularParcelasPRICE({
+            valorContrato: valorFinanciado,
+            entradaInicial: 0,
+            numeroParcelas: 36,
+            taxaJurosAnual: 0.12,
+            sistemaAmortizacao: 'PRICE'
+        });
+        
         // Cálculo do número total de parcelas necessárias
-        const totalParcelas = Math.ceil(valorFinanciado / installmentsObra.monthlyPayment);
+        const totalParcelas = Math.ceil(valorFinanciado / parcelasObra.valorParcela);
         const parcelasDuranteObra = Math.min(totalParcelas, 24);
-        const parcelasPosObra = totalParcelas > 24 ? Math.min(totalParcelas - 24, 36) : 0;
+        const totalParcelasPosObra = totalParcelas > 24 ? Math.min(totalParcelas - 24, 36) : 0;
 
         // Cálculo do valor da última parcela
-        const valorUltimaParcela = valorFinanciado - (installmentsObra.monthlyPayment * (parcelasDuranteObra - 1) + 
-                                   installmentsPosObra.monthlyPayment * (parcelasPosObra - 1));
+        const valorUltimaParcela = valorFinanciado - (parcelasObra.valorParcela * (parcelasDuranteObra - 1) + 
+                                   parcelasPosObra.valorParcela * (totalParcelasPosObra - 1));
 
         // Cálculo da data da última parcela
         const dataUltimaParcela = addMonths(dataInicioObraDate, totalParcelas - 1);
     
         // Cálculo do VGV (Valor Geral de Vendas)
-        const vgv = contrato + (installmentsPosObra.totalInterest || 0);
+        const vgv = contrato + (parcelasPosObra.totalJuros || 0);
     
         // Verificação do comprometimento de renda
-        const comprometimentoObra = (installmentsObra.monthlyPayment / renda) * 100;
-        const comprometimentoPosObra = (installmentsPosObra.monthlyPayment / renda) * 100;
-        const parcelaPosObraVGV = (installmentsPosObra.monthlyPayment / vgv) * 100;
+        const comprometimentoObra = (parcelasObra.valorParcela / renda) * 100;
+        const comprometimentoPosObra = (parcelasPosObra.valorParcela / renda) * 100;
+        const parcelaPosObraVGV = (parcelasPosObra.valorParcela / vgv) * 100;
     
-        const incomeCommitmentObra = comprometimentoObra <= 35;
-        const incomeCommitmentPosObra = comprometimentoPosObra <= 10;
-        const vgvCheckPosObra = parcelaPosObraVGV <= 5;
+        const comprometimentoRendaObra = comprometimentoObra <= 35;
+        const comprometimentoRendaPosObra = comprometimentoPosObra <= 10;
+        const verificacaoVGVPosObra = parcelaPosObraVGV <= 5;
         
         const parcelaAnual = renda * 12 * 0.70;
         const parcelaSemestral = renda * 6 * 0.70;
         
-        const annualCheck = parcelaAnual >= valorFinanciado;
-        const semiannualCheck = parcelaSemestral >= valorFinanciado / 2;
+        const verificacaoAnual = parcelaAnual >= valorFinanciado;
+        const verificacaoSemestral = parcelaSemestral >= valorFinanciado / 2;
         
-        const approved = incomeCommitmentObra && incomeCommitmentPosObra && vgvCheckPosObra && (annualCheck || semiannualCheck);
+        const aprovado = comprometimentoRendaObra && comprometimentoRendaPosObra && verificacaoVGVPosObra && (verificacaoAnual || verificacaoSemestral);
         
         const motivos = []; 
         
-        if (!incomeCommitmentObra) {
+        if (!comprometimentoRendaObra) {
             motivos.push(`Comprometimento de renda durante a obra excede 35% (atual: ${comprometimentoObra.toFixed(2)}%)`);
         }
-        if (!incomeCommitmentPosObra) {
+        if (!comprometimentoRendaPosObra) {
             motivos.push(`Comprometimento de renda pós-obra excede 10% (atual: ${comprometimentoPosObra.toFixed(2)}%)`);
         }
-        if (!vgvCheckPosObra) {
+        if (!verificacaoVGVPosObra) {
             motivos.push(`Parcela pós-obra excede 5% do VGV (atual: ${parcelaPosObraVGV.toFixed(2)}%)`);
         }
-        if (!annualCheck && !semiannualCheck) {
+        if (!verificacaoAnual && !verificacaoSemestral) {
             motivos.push(`Parcelas anuais (R$ ${parcelaAnual.toFixed(2)}) e semestrais (R$ ${parcelaSemestral.toFixed(2)}) são insuficientes para cobrir o valor financiado (R$ ${valorFinanciado.toFixed(2)})`);
         }
     
-        setResultado(approved ? 'Aprovado' : 'Reprovado');
+        setResultado(aprovado ? 'Aprovado' : 'Reprovado');
         setDetalhesSimulacao(`
             Valor do Contrato: R$ ${contrato.toFixed(2)}
             Valor de Entrada: R$ ${entrada.toFixed(2)}
             Valor Financiado: R$ ${valorFinanciado.toFixed(2)}
-            Parcela durante obra: R$ ${installmentsObra.monthlyPayment.toFixed(2)}
-            Parcela pós-obra: R$ ${installmentsPosObra.monthlyPayment.toFixed(2)}
+            Parcela durante obra: R$ ${parcelasObra.valorParcela.toFixed(2)}
+            Parcela pós-obra: R$ ${parcelasPosObra.valorParcela.toFixed(2)}
             Parcela anual: R$ ${parcelaAnual.toFixed(2)}
             Parcela semestral: R$ ${parcelaSemestral.toFixed(2)}
             Meses até Habite-se: ${mesesAteHabitese}
@@ -128,7 +128,7 @@ export const CreditoAssociativo = () => {
             Número total de parcelas: ${totalParcelas}
             Data da última parcela: ${format(dataUltimaParcela, 'dd/MM/yyyy')}
             Valor da última parcela: R$ ${valorUltimaParcela.toFixed(2)}
-            ${!approved ? `\nMotivos da reprovação:\n${motivos.join('\n')}` : ''}
+            ${!aprovado ? `\nMotivos da reprovação:\n${motivos.join('\n')}` : ''}
         `);
     };
 

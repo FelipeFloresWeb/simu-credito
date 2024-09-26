@@ -1,44 +1,46 @@
-export function calculatePriceInstallments(
-    contractValue: number,
-    downPayment: number,
-    numberOfInstallments: number,
-    annualInterestRate: number,
-    amortizationSystem: 'PRICE' | 'SAC'
+export function calcularParcelasPRICE(
+   {valorContrato, entradaInicial, numeroParcelas, taxaJurosAnual, sistemaAmortizacao}: {
+    valorContrato: number;
+    entradaInicial: number;
+    numeroParcelas: number;
+    taxaJurosAnual: number;
+    sistemaAmortizacao: string;
+   }
   ): {
-    monthlyPayment: number;
-    totalInterest: number;
-    totalAmount: number;
+    valorParcela: number;
+    totalJuros: number;
+    valorTotal: number;
     cet: number;
   } {
-    const principal = contractValue - downPayment;
-    const monthlyInterestRate = annualInterestRate / 12;
+    const principal = valorContrato - entradaInicial;
+    const taxaJurosMensal = taxaJurosAnual / 12;
   
-    if (amortizationSystem === 'PRICE') {
-      let monthlyPayment: number;
+    if (sistemaAmortizacao === 'PRICE') {
+      let valorParcela: number;
   
-      if (annualInterestRate === 0) {
+      if (taxaJurosAnual === 0) {
         // Se a taxa de juros for zero, simplesmente dividimos o principal pelo número de parcelas
-        monthlyPayment = principal / numberOfInstallments;
+        valorParcela = principal / numeroParcelas;
       } else {
         // Fórmula padrão do sistema PRICE
-        monthlyPayment =
-          (principal * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, numberOfInstallments)) /
-          (Math.pow(1 + monthlyInterestRate, numberOfInstallments) - 1);
+        valorParcela =
+          (principal * taxaJurosMensal * Math.pow(1 + taxaJurosMensal, numeroParcelas)) /
+          (Math.pow(1 + taxaJurosMensal, numeroParcelas) - 1);
       }
   
-      const totalAmount = monthlyPayment * numberOfInstallments;
-      const totalInterest = totalAmount - principal;
+      const valorTotal = valorParcela * numeroParcelas;
+      const totalJuros = valorTotal - principal;
   
-      // Calculate CET (Custo Efetivo Total)
-      const cet = annualInterestRate === 0 ? 0 : (Math.pow(1 + monthlyInterestRate, 12) - 1) * 100;
+      // Calcula CET (Custo Efetivo Total)
+      const cet = taxaJurosAnual === 0 ? 0 : (Math.pow(1 + taxaJurosMensal, 12) - 1) * 100;
   
       return {
-        monthlyPayment,
-        totalInterest,
-        totalAmount,
+        valorParcela,
+        totalJuros,
+        valorTotal,
         cet,
       };
-    } else if (amortizationSystem === 'SAC') {
+    } else if (sistemaAmortizacao === 'SAC') {
       // Implementação do sistema SAC, se necessário
       // ...
     }
@@ -46,10 +48,10 @@ export function calculatePriceInstallments(
     throw new Error('Sistema de amortização inválido');
   }
 
-export function calculateMonthDifference(startDate: Date, endDate: Date): number {
-  const monthDiff = endDate.getMonth() - startDate.getMonth() + 
-    (12 * (endDate.getFullYear() - startDate.getFullYear()));
+export function calcularDiferencaMeses(dataInicio: Date, dataFim: Date): number {
+  const diferencaMeses = dataFim.getMonth() - dataInicio.getMonth() + 
+    (12 * (dataFim.getFullYear() - dataInicio.getFullYear()));
   
-  return monthDiff;
+  return diferencaMeses;
 }
 
